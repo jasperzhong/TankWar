@@ -52,15 +52,12 @@ module Keyboard(
     end
     
     always @(negedge kclk)
-    begin
-        if(datacur[8:1] == 8'hF0)
-            isBreak <= 1'b1;
+    begin      
         if(isBreak == 1'b1)
             case(datacur[8:1])
-                UP1,DOWN1,LEFT1,RIGHT1: begin player1_btns = 5'b00000; isBreak <= 1'b0; end
-                UP2,DOWN2,LEFT2,RIGHT2: begin player2_btns = 5'b00000; isBreak <= 1'b0; end
-            endcase             
-                
+                UP1,DOWN1,LEFT1,RIGHT1: begin player1_btns = 5'b00000; end
+                UP2,DOWN2,LEFT2,RIGHT2: begin player2_btns = 5'b00000; end
+            endcase              
         else 
         begin
             if(cnt == 0)
@@ -98,4 +95,10 @@ module Keyboard(
             cnt = 4'b0;
     end
     
+    always @(*)
+        if(datacur[cnt] == 8'hF0)
+            isBreak = 1'b1;
+        else    
+            isBreak = 1'b0;
+            
 endmodule

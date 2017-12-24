@@ -284,12 +284,13 @@ module GameScene(
             red_tank_start_pos_y <= 60;
             red_stop <= 1'b0;
         end
-        else if(map_data != 0 && (pixel_x >= red_tank_start_pos_x) && (pixel_x < red_tank_start_pos_x + 31)
-        && (pixel_y >= red_tank_start_pos_y) && (pixel_y < red_tank_start_pos_y + 31))
+        else if((map_data != 8'hFF) && (pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31)
+        && (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
             red_stop <= 1'b1;
         else if(flag == 1'b1)
         begin
-            if(red_stop == 1'b0)
+            case(red_stop)
+            1'b0:
             begin
                 case (player1_btns)
                     UP:     red_tank_start_pos_y <= red_tank_start_pos_y - 10'b1;
@@ -303,7 +304,7 @@ module GameScene(
                     end
                 endcase
             end
-            else if(red_stop == 1'b1)
+            1'b1:
             begin
                 red_stop <= 1'b0;
                 case (player1_btns)
@@ -315,14 +316,17 @@ module GameScene(
                 begin
                     red_tank_start_pos_x <= red_tank_start_pos_x;
                     red_tank_start_pos_y <= red_tank_start_pos_y;
+                    red_stop <= 1'b0;
                 end
                 endcase            
             end
-            else
+            default:
             begin
                 red_tank_start_pos_x <= red_tank_start_pos_x;
-                red_tank_start_pos_y <= red_tank_start_pos_y;            
+                red_tank_start_pos_y <= red_tank_start_pos_y;   
+                red_stop <= 1'b0;         
             end
+            endcase
         end    
         
         if(!rst_n)
@@ -331,12 +335,13 @@ module GameScene(
             green_tank_start_pos_y <= 160;
             green_stop <= 1'b0;
         end
-        else if(map_data != 0 && (pixel_x >= green_tank_start_pos_x) && (pixel_x < green_tank_start_pos_x + 31)
-        && (pixel_y >= green_tank_start_pos_y) && (pixel_y < green_tank_start_pos_y + 31))
+        else if((map_data != 8'hFF) && (pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31)
+        && (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
             green_stop <= 1'b1;
         else if(flag == 1'b1)
         begin
-            if(green_stop == 1'b0)
+            case(green_stop)
+            1'b0:
             begin
                 case (player2_btns)
                     UP:     green_tank_start_pos_y <= green_tank_start_pos_y - 10'b1;
@@ -350,7 +355,7 @@ module GameScene(
                     end
                 endcase
             end
-            else if(green_stop == 1'b1)
+            1'b1:
             begin
                 green_stop <= 1'b0;
                 case (player2_btns)
@@ -362,14 +367,17 @@ module GameScene(
                 begin
                     green_tank_start_pos_x <= green_tank_start_pos_x;
                     green_tank_start_pos_y <= green_tank_start_pos_y;
+                    green_stop <= 1'b0;
                 end
                 endcase            
             end
-            else
+            default:
             begin
                 green_tank_start_pos_x <= green_tank_start_pos_x;
-                green_tank_start_pos_y <= green_tank_start_pos_y;            
+                green_tank_start_pos_y <= green_tank_start_pos_y;   
+                green_stop <= 1'b0;         
             end
+            endcase
         end    
    end
    
