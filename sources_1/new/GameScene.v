@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 2017/12/20 00:02:42
+// Create Date: 2017/12/22 18:51:24
 // Design Name: 
 // Module Name: GameScene
 // Project Name: 
@@ -21,117 +21,374 @@
 
 
 module GameScene(
-    input   wire        clk,  //50MHZ
-    input   wire        rst_n,  //复位信号
-    //VGA
-    output  wire         hsync,    //行同步信号
-    output  wire         vsync,    //场同步信号
-    output  wire [11:0]  rgb,
-    
-    //keyborad
-    input   wire        kclk,
-    input   wire        kdata
+    input wire clk_25m,
+    input wire rst_n,
+    input wire [9:0] pixel_x,
+    input wire [9:0] pixel_y,
+    input wire [4:0] player1_btns,
+    input wire [4:0] player2_btns,
+    output reg [7:0] screen_data
     );
     
-    localparam SPEED = 1;     //每一个指令走1个单位
+    //用于对应btns
+    localparam 
+        UP   = 5'b00001,
+        DOWN = 5'b00010,
+        LEFT = 5'b00100,
+        RIGHT= 5'b01000,
+        FIRE = 5'b10000;
     
+    localparam
+        DIR_UP   = 2'b00,
+        DIR_DOWN = 2'b01,
+        DIR_LEFT = 2'b10,
+        DIR_RIGHT= 2'b11;
     
-//====================VGA===========================//
-    //VGA时钟
-    wire clk25m;
-    //地图数据线
-    wire [31:0] address_map;
-    wire [7:0]  data_map;
-    //红色坦克数据线
-    reg [1:0] direction;  //方向：上下左右
-    reg [1:0] state;   //状态：静止，移动，开火，死亡
-    reg [9:0] red_tank_pos_x=250;   //水平方向位置
-    reg [9:0] red_tank_pos_y=150;   //竖直方向位置
-    wire [9:0] address_red_tank; //取ROM的地址
-    wire [7:0]  data_red_tank;   //ROM返回的数据
+    localparam 
+        TANK_WIDTH = 32,
+        TANK_HEIGHT = 32;
     
-//====================Keyborad===========================//
-    wire clk50m;
-    //接收到的指令
-    wire up1, down1, left1, right1, fire1;   //Player
-    wire clk_1000hz;
+    localparam 
+        FLAG_TANK_CNT = 100000,
+        FLAG_BULLET_CNT = 10000;
     
-    keyborad kborad(
-            .clk(clk50m),
-            .kclk(kclk),
-            .kdata(kdata),
-            .up1(up1),.down1(down1),.left1(left1),.right1(right1)
+    reg flag;
+    reg [31:0] flag_cnt;
+    
+    reg red_stop = 1'b0;
+    reg green_stop = 1'b0;
+    //坦克方向
+    reg [2:0] red_tank_dir;
+    reg [2:0] green_tank_dir;
+    
+    //坦克起始位置
+    reg [9:0] red_tank_start_pos_x;
+    reg [9:0] red_tank_start_pos_y;
+    
+    reg [9:0] green_tank_start_pos_x;
+    reg [9:0] green_tank_start_pos_y;    
+    
+    //ROM数据
+    reg [18:0] map_addr;
+    wire [7:0] map_data;
+    
+    reg [9:0] red_tank_up_addr;
+    wire [7:0] red_tank_up_data;
+    
+    reg [9:0] red_tank_left_addr;
+    wire [7:0] red_tank_left_data;
+    
+    reg [9:0] green_tank_up_addr;
+    wire [7:0] green_tank_up_data;
+    
+    reg [9:0] green_tank_left_addr;
+    wire [7:0] green_tank_left_data;
+    
+
+    //ROM数据
+    MapROM U_MAPROM_0(
+        .clka(clk_25m),
+        .addra(map_addr),
+        .douta(map_data)
     );
     
-    Divider #(.DIV(100000))
-        division(
-            .I_CLK(clk),
-            .rst_n(rst_n),
-            .O_CLK(clk_1000hz)
-        );    
-    always @(posedge clk_1000hz) begin
-        if(up1 == 1'b1) 
-            red_tank_pos_y <= red_tank_pos_y - SPEED;
-        if(down1 == 1'b1)
-            red_tank_pos_y <= red_tank_pos_y + SPEED;
-        if(left1 == 1'b1)
-            red_tank_pos_x <= red_tank_pos_x - SPEED;
-        if(right1 == 1'b1)
-            red_tank_pos_x <= red_tank_pos_x + SPEED;
-    end
+    RedTankUpROM U_REDTANKUPROM_0(
+        .clka(clk_25m),
+        .addra(red_tank_up_addr),
+        .douta(red_tank_up_data)
+    );  
         
-    
-    //输出25MHZ和50MHZ的时钟
-    clk_to_25m clkdiv1(
-         .clk_in1(clk),
-         .clk_out1(clk25m),
-         .clk_out2(clk50m)
-    );
-    /*
-    //建立静态地图
-    VGA_sprite Map(
-        .clk25m(clk25m),
-        .rst_n(rst_n),
-        .data_in(data_map),
-        .hsync(hsync),
-        .vsync(vsync),
-        .rgb(rgb),
-        .address(address_map)
+    RedTankLeftROM U_REDTANKLEFTROM_0(
+        .clka(clk_25m),
+        .addra(red_tank_left_addr),
+        .douta(red_tank_left_data)
     );
     
-    //地图ROM
-    ROM_map map(
-        .clka(clk25m),
-        .addra(address_map),
-        .douta(data_map)
-    );
-     */
+    GreenTankUpROM U_GREENTANKUPROM_0(
+        .clka(clk_25m),
+        .addra(green_tank_up_addr),
+        .douta(green_tank_up_data)
+    );    
     
-    //建立红色坦克
-    VGA_sprite #(
-            .REAL_WIDTH(32),
-            .REAL_HEIGHT(32),
-            .ADDR_WIDTH(9)
-    )   
-    Red_tank 
-    (
-        .clk25m(clk25m),
-        .rst_n(rst_n),
-        .data_in(data_red_tank),
-        .pos_x(red_tank_pos_x),
-        .pos_y(red_tank_pos_y),
-        .hsync(hsync),
-        .vsync(vsync),
-        .rgb(rgb),
-        .address(address_red_tank)
+    GreenTankLeftROM U_GREENTANKLEFTROM_0(
+        .clka(clk_25m),
+        .addra(green_tank_left_addr),
+        .douta(green_tank_left_data)
     );
     
-    //红色坦克ROM
-    ROM_red_tank red_tank(
-        .clka(clk25m),
-        .addra(address_red_tank),
-        .douta(data_red_tank)
-    );
+    //红坦克方向  keyboard -> fsm   fsm下一个状态
+    always @(posedge clk_25m, negedge rst_n)
+    begin
+        if(!rst_n)
+            red_tank_dir <= DIR_UP;
+        else
+        begin
+            case (player1_btns)
+                UP:     red_tank_dir <= DIR_UP;
+                DOWN:   red_tank_dir <= DIR_DOWN;
+                LEFT:   red_tank_dir <= DIR_LEFT;
+                RIGHT:  red_tank_dir <= DIR_RIGHT;
+                default:red_tank_dir <= red_tank_dir;
+            endcase
+        end  
+    end
+    
+    //绿坦克方向  keyboard -> fsm
+    always @(posedge clk_25m, negedge rst_n)
+    begin
+        if(!rst_n)
+            green_tank_dir <= DIR_UP;
+        else
+        begin
+            case (player2_btns)
+                UP:     green_tank_dir <= DIR_UP;
+                DOWN:   green_tank_dir <= DIR_DOWN;
+                LEFT:   green_tank_dir <= DIR_LEFT;
+                RIGHT:  green_tank_dir <= DIR_RIGHT;
+                default:green_tank_dir <= green_tank_dir;
+            endcase
+        end  
+    end    
+    
+    //VGA显示  fsm -> VGA   fsm输出
+    always @(posedge clk_25m, negedge rst_n)
+    begin
+        if(!rst_n)
+        begin
+            map_addr <= 19'b0;
+            screen_data <= 8'b0;
+        end
+        else
+        begin
+            map_addr <= pixel_x + pixel_y*640;
+            screen_data <= map_data;
+        end
+        
+        if(!rst_n)
+        begin
+            red_tank_up_addr <= 10'b0;
+            red_tank_left_addr <= 10'b0;
+        end
+        else
+        begin
+            case (red_tank_dir)
+                DIR_UP: 
+                    if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
+                        red_tank_up_addr <= 5'b0;
+                    else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
+                    (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
+                    begin
+                        red_tank_up_addr <= red_tank_up_addr + 5'b1;
+                        screen_data <= red_tank_up_data;
+                    end
+                    else
+                        red_tank_up_addr <= red_tank_up_addr;
+                DIR_DOWN:
+                    if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
+                        red_tank_up_addr <= 5'b11111;
+                    else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
+                    (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
+                    begin
+                        red_tank_up_addr <= red_tank_up_addr - 5'b1;
+                        screen_data <= red_tank_up_data;
+                    end
+                    else
+                        red_tank_up_addr <= red_tank_up_addr;     
+                DIR_LEFT:
+                    if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
+                        red_tank_left_addr <= 5'b0;
+                    else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
+                    (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
+                    begin
+                        red_tank_left_addr <= red_tank_left_addr + 5'b1;
+                        screen_data <= red_tank_left_data;
+                    end
+                    else
+                        red_tank_left_addr <= red_tank_left_addr; 
+                DIR_RIGHT:
+                    if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
+                        red_tank_left_addr <= 5'b11111;
+                    else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
+                    (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
+                    begin
+                        red_tank_left_addr <= red_tank_left_addr - 5'b1;
+                        screen_data <= red_tank_left_data;
+                    end
+                    else
+                        red_tank_left_addr <= red_tank_left_addr;                                                           
+            endcase 
+        end
+        
+        if(!rst_n)
+        begin
+            green_tank_up_addr <= 10'b0;
+            green_tank_left_addr <= 10'b0;
+        end
+        else
+        begin
+            case (green_tank_dir)
+                DIR_UP: 
+                    if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
+                        green_tank_up_addr <= 5'b0;
+                    else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
+                    (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
+                    begin
+                        green_tank_up_addr <= green_tank_up_addr + 5'b1;
+                        screen_data <= green_tank_up_data;
+                    end
+                    else
+                        green_tank_up_addr <= green_tank_up_addr;
+                DIR_DOWN:
+                    if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
+                        green_tank_up_addr <= 5'b11111;
+                    else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
+                    (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
+                    begin
+                        green_tank_up_addr <= green_tank_up_addr - 5'b1;
+                        screen_data <= green_tank_up_data;
+                    end
+                    else
+                        green_tank_up_addr <= green_tank_up_addr;     
+                DIR_LEFT:
+                    if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
+                        green_tank_left_addr <= 5'b0;
+                    else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
+                    (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
+                    begin
+                        green_tank_left_addr <= green_tank_left_addr + 5'b1;
+                        screen_data <= green_tank_left_data;
+                    end
+                    else
+                        green_tank_left_addr <= green_tank_left_addr; 
+                DIR_RIGHT:
+                    if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
+                        green_tank_left_addr <= 5'b11111;
+                    else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
+                    (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
+                    begin
+                        green_tank_left_addr <= green_tank_left_addr - 5'b1;
+                        screen_data <= green_tank_left_data;
+                    end
+                    else
+                        green_tank_left_addr <= green_tank_left_addr;                                                           
+            endcase 
+        end        
+   end
+    
+    //位置更新 
+   always @(posedge clk_25m, negedge rst_n)
+   begin
+        if(!rst_n)
+        begin
+            red_tank_start_pos_x <= 60;
+            red_tank_start_pos_y <= 60;
+            red_stop <= 1'b0;
+        end
+        else if(map_data != 0 && (pixel_x >= red_tank_start_pos_x) && (pixel_x < red_tank_start_pos_x + 31)
+        && (pixel_y >= red_tank_start_pos_y) && (pixel_y < red_tank_start_pos_y + 31))
+            red_stop <= 1'b1;
+        else if(flag == 1'b1)
+        begin
+            if(red_stop == 1'b0)
+            begin
+                case (player1_btns)
+                    UP:     red_tank_start_pos_y <= red_tank_start_pos_y - 10'b1;
+                    DOWN:   red_tank_start_pos_y <= red_tank_start_pos_y + 10'b1;
+                    LEFT:   red_tank_start_pos_x <= red_tank_start_pos_x - 10'b1;
+                    RIGHT:  red_tank_start_pos_x <= red_tank_start_pos_x + 10'b1;
+                    default:
+                    begin
+                        red_tank_start_pos_x <= red_tank_start_pos_x;
+                        red_tank_start_pos_y <= red_tank_start_pos_y;
+                    end
+                endcase
+            end
+            else if(red_stop == 1'b1)
+            begin
+                red_stop <= 1'b0;
+                case (player1_btns)
+                UP:     red_tank_start_pos_y <= red_tank_start_pos_y + 10'b1;
+                DOWN:   red_tank_start_pos_y <= red_tank_start_pos_y - 10'b1;
+                LEFT:   red_tank_start_pos_x <= red_tank_start_pos_x + 10'b1;
+                RIGHT:  red_tank_start_pos_x <= red_tank_start_pos_x - 10'b1;
+                default:
+                begin
+                    red_tank_start_pos_x <= red_tank_start_pos_x;
+                    red_tank_start_pos_y <= red_tank_start_pos_y;
+                end
+                endcase            
+            end
+            else
+            begin
+                red_tank_start_pos_x <= red_tank_start_pos_x;
+                red_tank_start_pos_y <= red_tank_start_pos_y;            
+            end
+        end    
+        
+        if(!rst_n)
+        begin
+            green_tank_start_pos_x <= 60;
+            green_tank_start_pos_y <= 160;
+            green_stop <= 1'b0;
+        end
+        else if(map_data != 0 && (pixel_x >= green_tank_start_pos_x) && (pixel_x < green_tank_start_pos_x + 31)
+        && (pixel_y >= green_tank_start_pos_y) && (pixel_y < green_tank_start_pos_y + 31))
+            green_stop <= 1'b1;
+        else if(flag == 1'b1)
+        begin
+            if(green_stop == 1'b0)
+            begin
+                case (player2_btns)
+                    UP:     green_tank_start_pos_y <= green_tank_start_pos_y - 10'b1;
+                    DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y + 10'b1;
+                    LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x - 10'b1;
+                    RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x + 10'b1;
+                    default:
+                    begin
+                        green_tank_start_pos_x <= green_tank_start_pos_x;
+                        green_tank_start_pos_y <= green_tank_start_pos_y;
+                    end
+                endcase
+            end
+            else if(green_stop == 1'b1)
+            begin
+                green_stop <= 1'b0;
+                case (player2_btns)
+                UP:     green_tank_start_pos_y <= green_tank_start_pos_y + 10'b1;
+                DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y - 10'b1;
+                LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x + 10'b1;
+                RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x - 10'b1;
+                default:
+                begin
+                    green_tank_start_pos_x <= green_tank_start_pos_x;
+                    green_tank_start_pos_y <= green_tank_start_pos_y;
+                end
+                endcase            
+            end
+            else
+            begin
+                green_tank_start_pos_x <= green_tank_start_pos_x;
+                green_tank_start_pos_y <= green_tank_start_pos_y;            
+            end
+        end    
+   end
    
-    
+   always @(posedge clk_25m, negedge rst_n)
+   begin
+        if(!rst_n)
+        begin
+            flag <= 1'b0;
+            flag_cnt <= 0;
+        end
+        else if(flag_cnt === FLAG_TANK_CNT)
+        begin
+            flag <= 1'b1;
+            flag_cnt <= 0;            
+        end
+        else
+        begin
+            flag <= 1'b0;
+            flag_cnt <= flag_cnt + 1;              
+        end
+   end
 endmodule
