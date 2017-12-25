@@ -49,7 +49,7 @@ module GameScene(
         TANK_HEIGHT = 32;
     
     localparam 
-        FLAG_TANK_CNT = 100000,
+        FLAG_TANK_CNT = 50000,
         FLAG_BULLET_CNT = 10000;
     
     reg flag;
@@ -116,7 +116,7 @@ module GameScene(
         .douta(green_tank_left_data)
     );
     
-    //红坦克方向  keyboard -> fsm   fsm下一个状态
+    //红坦克方向  keyboard -> fsm  
     always @(posedge clk_25m, negedge rst_n)
     begin
         if(!rst_n)
@@ -284,12 +284,13 @@ module GameScene(
             red_tank_start_pos_y <= 60;
             red_stop <= 1'b0;
         end
-        else if(map_data != 0 && (pixel_x >= red_tank_start_pos_x) && (pixel_x < red_tank_start_pos_x + 31)
-        && (pixel_y >= red_tank_start_pos_y) && (pixel_y < red_tank_start_pos_y + 31))
+        else if((map_data != 8'hFF) && (pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31)
+        && (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
             red_stop <= 1'b1;
         else if(flag == 1'b1)
         begin
-            if(red_stop == 1'b0)
+            case(red_stop)
+            1'b0:
             begin
                 case (player1_btns)
                     UP:     red_tank_start_pos_y <= red_tank_start_pos_y - 10'b1;
@@ -303,14 +304,14 @@ module GameScene(
                     end
                 endcase
             end
-            else if(red_stop == 1'b1)
+            1'b1:
             begin
                 red_stop <= 1'b0;
-                case (player1_btns)
-                UP:     red_tank_start_pos_y <= red_tank_start_pos_y + 10'b1;
-                DOWN:   red_tank_start_pos_y <= red_tank_start_pos_y - 10'b1;
-                LEFT:   red_tank_start_pos_x <= red_tank_start_pos_x + 10'b1;
-                RIGHT:  red_tank_start_pos_x <= red_tank_start_pos_x - 10'b1;
+                case (red_tank_dir)
+                    DIR_UP:     red_tank_start_pos_y <= red_tank_start_pos_y + 10'd10;
+                    DIR_DOWN:   red_tank_start_pos_y <= red_tank_start_pos_y - 10'd10;
+                    DIR_LEFT:   red_tank_start_pos_x <= red_tank_start_pos_x + 10'd10;
+                    DIR_RIGHT:  red_tank_start_pos_x <= red_tank_start_pos_x - 10'd10;
                 default:
                 begin
                     red_tank_start_pos_x <= red_tank_start_pos_x;
@@ -318,11 +319,13 @@ module GameScene(
                 end
                 endcase            
             end
-            else
+            default:
             begin
                 red_tank_start_pos_x <= red_tank_start_pos_x;
-                red_tank_start_pos_y <= red_tank_start_pos_y;            
+                red_tank_start_pos_y <= red_tank_start_pos_y;   
+                red_stop <= 1'b0;         
             end
+            endcase
         end    
         
         if(!rst_n)
@@ -331,12 +334,13 @@ module GameScene(
             green_tank_start_pos_y <= 160;
             green_stop <= 1'b0;
         end
-        else if(map_data != 0 && (pixel_x >= green_tank_start_pos_x) && (pixel_x < green_tank_start_pos_x + 31)
-        && (pixel_y >= green_tank_start_pos_y) && (pixel_y < green_tank_start_pos_y + 31))
+        else if((map_data != 8'hFF) && (pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31)
+        && (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
             green_stop <= 1'b1;
         else if(flag == 1'b1)
         begin
-            if(green_stop == 1'b0)
+            case(green_stop)
+            1'b0:
             begin
                 case (player2_btns)
                     UP:     green_tank_start_pos_y <= green_tank_start_pos_y - 10'b1;
@@ -350,26 +354,28 @@ module GameScene(
                     end
                 endcase
             end
-            else if(green_stop == 1'b1)
+            1'b1:
             begin
-                green_stop <= 1'b0;
+                green_stop <= 1'b0; 
                 case (player2_btns)
-                UP:     green_tank_start_pos_y <= green_tank_start_pos_y + 10'b1;
-                DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y - 10'b1;
-                LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x + 10'b1;
-                RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x - 10'b1;
+                UP:     green_tank_start_pos_y <= green_tank_start_pos_y + 10'd10;
+                DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y - 10'd10;
+                LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x + 10'd10;
+                RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x - 10'd10;
                 default:
                 begin
                     green_tank_start_pos_x <= green_tank_start_pos_x;
                     green_tank_start_pos_y <= green_tank_start_pos_y;
                 end
-                endcase            
+                endcase                 
             end
-            else
+            default:
             begin
                 green_tank_start_pos_x <= green_tank_start_pos_x;
-                green_tank_start_pos_y <= green_tank_start_pos_y;            
+                green_tank_start_pos_y <= green_tank_start_pos_y;   
+                green_stop <= 1'b0;         
             end
+            endcase
         end    
    end
    

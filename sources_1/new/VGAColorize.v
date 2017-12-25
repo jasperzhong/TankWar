@@ -36,7 +36,7 @@ module VGAColorize(
         begin
             rgb[3:0] <= {screen_data[7:5], 1'b0};
             rgb[7:4] <= {screen_data[4:2], 1'b0};
-            rgb[11:8]<= {screen_data[1:0], 1'b0};
+            rgb[11:8]<= {screen_data[1:0], 2'b0};
         end
         else
             rgb <= 12'b0;
