@@ -32,8 +32,8 @@ module VGASync(
     
     localparam WIDTH = 800;
     localparam HEIGHT = 525;
-    localparam HSYNC_START = 655;
-    localparam HSYNC_END = 750;
+    localparam HSYNC_START = 663;
+    localparam HSYNC_END = 758;
     localparam VSYNC_START = 490;
     localparam VSYNC_END = 491;
     

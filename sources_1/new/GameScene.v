@@ -155,7 +155,7 @@ module GameScene(
     begin
         if(!rst_n)
         begin
-            map_addr <= 19'b0;
+            map_addr <= 19'b00;
             screen_data <= 8'b0;
         end
         else
@@ -166,15 +166,15 @@ module GameScene(
         
         if(!rst_n)
         begin
-            red_tank_up_addr <= 10'b0;
-            red_tank_left_addr <= 10'b0;
+            red_tank_up_addr <= 10'b10;
+            red_tank_left_addr <= 10'b10;
         end
         else
         begin
             case (red_tank_dir)
                 DIR_UP: 
                     if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
-                        red_tank_up_addr <= 5'b0;
+                        red_tank_up_addr <= 5'b10;
                     else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
                     (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
                     begin
@@ -185,7 +185,7 @@ module GameScene(
                         red_tank_up_addr <= red_tank_up_addr;
                 DIR_DOWN:
                     if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
-                        red_tank_up_addr <= 5'b11111;
+                        red_tank_up_addr <= 5'b11101;
                     else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
                     (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
                     begin
@@ -196,7 +196,7 @@ module GameScene(
                         red_tank_up_addr <= red_tank_up_addr;     
                 DIR_LEFT:
                     if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
-                        red_tank_left_addr <= 5'b0;
+                        red_tank_left_addr <= 5'b10;
                     else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
                     (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
                     begin
@@ -207,7 +207,7 @@ module GameScene(
                         red_tank_left_addr <= red_tank_left_addr; 
                 DIR_RIGHT:
                     if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
-                        red_tank_left_addr <= 5'b11111;
+                        red_tank_left_addr <= 5'b11101;
                     else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
                     (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
                     begin
@@ -221,15 +221,15 @@ module GameScene(
         
         if(!rst_n)
         begin
-            green_tank_up_addr <= 10'b0;
-            green_tank_left_addr <= 10'b0;
+            green_tank_up_addr <= 10'b10;
+            green_tank_left_addr <= 10'b10;
         end
         else
         begin
             case (green_tank_dir)
                 DIR_UP: 
                     if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
-                        green_tank_up_addr <= 5'b0;
+                        green_tank_up_addr <= 5'b10;
                     else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
                     (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
                     begin
@@ -240,7 +240,7 @@ module GameScene(
                         green_tank_up_addr <= green_tank_up_addr;
                 DIR_DOWN:
                     if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
-                        green_tank_up_addr <= 5'b11111;
+                        green_tank_up_addr <= 5'b11101;
                     else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
                     (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
                     begin
@@ -251,7 +251,7 @@ module GameScene(
                         green_tank_up_addr <= green_tank_up_addr;     
                 DIR_LEFT:
                     if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
-                        green_tank_left_addr <= 5'b0;
+                        green_tank_left_addr <= 5'b10;
                     else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
                     (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
                     begin
@@ -262,7 +262,7 @@ module GameScene(
                         green_tank_left_addr <= green_tank_left_addr; 
                 DIR_RIGHT:
                     if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
-                        green_tank_left_addr <= 5'b11111;
+                        green_tank_left_addr <= 5'b11101;
                     else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
                     (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
                     begin
@@ -316,7 +316,6 @@ module GameScene(
                 begin
                     red_tank_start_pos_x <= red_tank_start_pos_x;
                     red_tank_start_pos_y <= red_tank_start_pos_y;
-                    red_stop <= 1'b0;
                 end
                 endcase            
             end
@@ -358,16 +357,15 @@ module GameScene(
             1'b1:
             begin
                 green_stop <= 1'b0; 
-                case (player2_btns)
-                UP:     green_tank_start_pos_y <= green_tank_start_pos_y + 10'd10;
-                DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y - 10'd10;
-                LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x + 10'd10;
-                RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x - 10'd10;
+                case (green_tank_dir)
+                DIR_UP:     green_tank_start_pos_y <= green_tank_start_pos_y + 10'd10;
+                DIR_DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y - 10'd10;
+                DIR_LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x + 10'd10;
+                DIR_RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x - 10'd10;
                 default:
                 begin
                     green_tank_start_pos_x <= green_tank_start_pos_x;
                     green_tank_start_pos_y <= green_tank_start_pos_y;
-                    green_stop <= 1'b0;
                 end
                 endcase                 
             end
