@@ -40,11 +40,11 @@ module Keyboard(
         RIGHT1 = 8'h23,
         FIRE1 = 8'h29,
         
-        UP2 = 8'h43,
-        DOWN2 = 8'h42,
-        LEFT2 = 8'h3B,
-        RIGHT2 = 8'h4B,
-        FIRE2 = 8'h5A;
+        UP2 = 8'h75,
+        DOWN2 = 8'h72,
+        LEFT2 = 8'h6B,
+        RIGHT2 = 8'h74,
+        FIRE2 = 8'h70;
     
     initial
     begin
