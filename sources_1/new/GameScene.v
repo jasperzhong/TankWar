@@ -52,10 +52,15 @@ module GameScene(
         FLAG_TANK_CNT = 100000,
         FLAG_BULLET_CNT = 25000;
     
+    //计数器
     reg flag;
     reg bullet_flag;
     reg [31:0] flag_cnt;
     reg [31:0] bullet_flag_cnt;
+    
+    reg explosion_active = 1'b0;
+    
+    reg [1:0] winner = 2'b00;  // 01 -> red  10 -> green
     
     reg red_stop = 1'b0;
     reg green_stop = 1'b0;
@@ -114,6 +119,10 @@ module GameScene(
     reg [6:0] green_bullet_left_addr;
     wire [7:0] green_bullet_left_data;
         
+    //爆炸
+    reg [9:0] explosion_addr;
+    wire [7:0] explosion_data;
+    
     //ROM数据
     MapROM U_MAPROM_0(
         .clka(clk_25m),
@@ -170,14 +179,21 @@ module GameScene(
         .spo(green_bullet_left_data)
     );        
     
+    ExplosionROM U_EXPLOSIONROM_0(
+        .a(explosion_addr),
+        .clk(clk_25m),
+        .spo(explosion_data)
+    );
+    
+    
     //红坦克方向  keyboard -> fsm  
     always @(posedge clk_25m, negedge rst_n)
     begin
         if(!rst_n)
         begin
-            red_tank_dir <= DIR_UP;
+            red_tank_dir <= DIR_DOWN;
         end
-        else if(red_bullet_active == 1'b0 && player1_btns == FIRE) 
+        else if(red_bullet_active == 1'b0 && player1_btns == FIRE && explosion_active == 1'b0) 
         begin
             case (red_tank_dir)
                 DIR_UP:     red_bullet_dir <= DIR_UP;
@@ -187,7 +203,7 @@ module GameScene(
                 default:    red_bullet_dir <= red_bullet_dir;
             endcase
         end
-        else
+        else if(explosion_active == 1'b0)
         begin
             case (player1_btns)
                 UP:     red_tank_dir <= DIR_UP;
@@ -206,7 +222,7 @@ module GameScene(
         begin
             green_tank_dir <= DIR_UP;
         end
-        else if(green_bullet_active == 1'b0 && player2_btns == FIRE)
+        else if(green_bullet_active == 1'b0 && player2_btns == FIRE && explosion_active == 1'b0)
         begin
             case (green_tank_dir)
                 DIR_UP:     green_bullet_dir <= DIR_UP;
@@ -216,7 +232,7 @@ module GameScene(
                 default:    green_bullet_dir <= green_bullet_dir;
             endcase          
         end
-        else
+        else if(explosion_active == 1'b0)
         begin
             case (player2_btns)
                 UP:     green_tank_dir <= DIR_UP;
@@ -246,6 +262,20 @@ module GameScene(
         begin
             red_tank_up_addr <= 10'b10;
             red_tank_left_addr <= 10'b10;
+            explosion_addr <= 10'b10;
+        end
+        else if(explosion_active == 1'b1 && winner == 2'b10)
+        begin
+            if((pixel_x == red_tank_start_pos_x) && (pixel_y == red_tank_start_pos_y))
+                explosion_addr <= 10'b10;
+            else if((pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31) &&
+            (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
+            begin
+                explosion_addr <= explosion_addr + 10'b1;
+                screen_data <= explosion_data;
+            end
+            else
+                explosion_addr <= explosion_addr;           
         end
         else
         begin
@@ -302,7 +332,7 @@ module GameScene(
             red_bullet_up_addr <= 7'b10;
             red_bullet_left_addr <= 7'b10;
         end
-        else if(red_bullet_active == 1'b1)
+        else if(red_bullet_active == 1'b1 && explosion_active == 1'b0)
         begin
             case (red_bullet_dir)
                  DIR_UP:
@@ -357,7 +387,21 @@ module GameScene(
         begin
             green_tank_up_addr <= 10'b10;
             green_tank_left_addr <= 10'b10;
+            explosion_addr <= 10'b10;
         end
+        else if(explosion_active == 1'b1 && winner == 2'b01)
+        begin
+            if((pixel_x == green_tank_start_pos_x) && (pixel_y == green_tank_start_pos_y))
+                explosion_addr <= 10'b10;
+            else if((pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31) &&
+            (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
+            begin
+                explosion_addr <= explosion_addr + 10'b1;
+                screen_data <= explosion_data;
+            end
+            else
+                explosion_addr <= explosion_addr;            
+            end
         else
         begin
             case (green_tank_dir)
@@ -413,7 +457,7 @@ module GameScene(
             green_bullet_up_addr <= 7'b10;
             green_bullet_left_addr <= 7'b10;
         end
-        else if(green_bullet_active == 1'b1)
+        else if(green_bullet_active == 1'b1 && explosion_active == 1'b0)
         begin
             case (green_bullet_dir)
                  DIR_UP:
@@ -476,7 +520,7 @@ module GameScene(
         else if((map_data != 8'hFF) && (pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31)
         && (pixel_y >= red_tank_start_pos_y) && (pixel_y <= red_tank_start_pos_y + 31))
             red_stop <= 1'b1;
-        else if(flag == 1'b1)
+        else if((flag == 1'b1) && (explosion_active == 1'b0))
         begin
             case(red_stop)
             1'b0:
@@ -538,7 +582,7 @@ module GameScene(
                             red_bullet_active <= 1'b0;
            endcase
         end
-        else if(red_bullet_active == 1'b1 && bullet_flag == 1'b1)
+        else if((red_bullet_active == 1'b1) && (bullet_flag == 1'b1))
         begin
             case (red_bullet_dir)
                 DIR_UP:     red_bullet_start_pos_y <= red_bullet_start_pos_y - 10'b1;
@@ -552,7 +596,15 @@ module GameScene(
                 end                                               
             endcase
         end
-        
+        else if(red_bullet_active == 1'b1)
+        begin
+            if((red_bullet_start_pos_x >= green_tank_start_pos_x) && (red_bullet_start_pos_x <= green_tank_start_pos_x + 31)
+            && (red_bullet_start_pos_y >= green_tank_start_pos_y) && (red_bullet_start_pos_y <= green_tank_start_pos_y + 31))
+            begin
+                explosion_active <= 1'b1;
+                winner = 2'b01; 
+            end
+        end
         
         if(!rst_n)
         begin
@@ -563,16 +615,16 @@ module GameScene(
         else if((map_data != 8'hFF) && (pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31)
         && (pixel_y >= green_tank_start_pos_y) && (pixel_y <= green_tank_start_pos_y + 31))
             green_stop <= 1'b1;
-        else if(flag == 1'b1)
+        else if((flag == 1'b1) && (explosion_active == 1'b0))
         begin
-            case(green_stop)
+            case (green_stop)
             1'b0:
             begin
                 case (player2_btns)
-                    UP:     green_tank_start_pos_y <= green_tank_start_pos_y - 10'b1;
-                    DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y + 10'b1;
-                    LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x - 10'b1;
-                    RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x + 10'b1;
+                    UP:     green_tank_start_pos_y <= green_tank_start_pos_y - 10'd1;
+                    DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y + 10'd1;
+                    LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x - 10'd1;
+                    RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x + 10'd1;
                     default:
                     begin
                         green_tank_start_pos_x <= green_tank_start_pos_x;
@@ -584,10 +636,10 @@ module GameScene(
             begin
                 green_stop <= 1'b0; 
                 case (green_tank_dir)
-                DIR_UP:     green_tank_start_pos_y <= green_tank_start_pos_y + 10'd10;
-                DIR_DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y - 10'd10;
-                DIR_LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x + 10'd10;
-                DIR_RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x - 10'd10;
+                    DIR_UP:     green_tank_start_pos_y <= green_tank_start_pos_y + 10'd10;
+                    DIR_DOWN:   green_tank_start_pos_y <= green_tank_start_pos_y - 10'd10;
+                    DIR_LEFT:   green_tank_start_pos_x <= green_tank_start_pos_x + 10'd10;
+                    DIR_RIGHT:  green_tank_start_pos_x <= green_tank_start_pos_x - 10'd10;
                 default:
                 begin
                     green_tank_start_pos_x <= green_tank_start_pos_x;
@@ -625,7 +677,7 @@ module GameScene(
                     green_bullet_active <= 1'b0;
             endcase
         end
-        else if(green_bullet_active == 1'b1 && bullet_flag == 1'b1)
+        else if((green_bullet_active == 1'b1) && (bullet_flag == 1'b1))
         begin
             case (green_bullet_dir)
                 DIR_UP:     green_bullet_start_pos_y <= green_bullet_start_pos_y - 10'b1;
@@ -638,8 +690,17 @@ module GameScene(
                     green_bullet_start_pos_y <= green_bullet_start_pos_y;
                 end                                               
             endcase
+        end  
+        else if(green_bullet_active == 1'b1)
+        begin
+            if((green_bullet_start_pos_x >= red_tank_start_pos_x) && (green_bullet_start_pos_x <= red_tank_start_pos_x + 31)
+            && (green_bullet_start_pos_y >= red_tank_start_pos_y) && (green_bullet_start_pos_y <= red_tank_start_pos_y + 31))
+            begin
+                explosion_active <= 1'b1;
+                winner = 2'b10; 
+            end
         end        
-          
+                 
    end
    
    always @(posedge clk_25m, negedge rst_n)
