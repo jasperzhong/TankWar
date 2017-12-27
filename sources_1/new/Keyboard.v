@@ -62,7 +62,7 @@ module Keyboard(
     );
     
     
-    always@(negedge(kclkf))begin
+    always@(negedge kclkf)begin
          if(isBreak == 1'b1) begin
             datacur [cnt] = kdataf;
             cnt = cnt + 1;

@@ -49,8 +49,8 @@ module GameScene(
         TANK_HEIGHT = 32;
     
     localparam 
-        FLAG_TANK_CNT = 50000,
-        FLAG_BULLET_CNT = 10000;
+        FLAG_TANK_CNT = 100000,
+        FLAG_BULLET_CNT = 25000;
     
     reg flag;
     reg bullet_flag;
@@ -82,8 +82,8 @@ module GameScene(
     reg [9:0] green_bullet_start_pos_y;
     
     //是否发射了子弹
-    reg red_bullet_active;
-    reg green_bullet_active;
+    reg red_bullet_active = 1'b0;
+    reg green_bullet_active = 1'b0;
     
     //ROM数据
     reg [18:0] map_addr;
@@ -121,55 +121,54 @@ module GameScene(
         .douta(map_data)
     );
     
-    RedTankUpROM U_REDTANKUPROM_0(
-        .clka(clk_25m),
-        .addra(red_tank_up_addr),
-        .douta(red_tank_up_data)
+    RedTankUpROM U_REDTANKUPROM_0( 
+        .a(red_tank_up_addr),
+        .clk(clk_25m),
+        .spo(red_tank_up_data)
     );  
         
-    RedTankLeftROM U_REDTANKLEFTROM_0(
-        .clka(clk_25m),
-        .addra(red_tank_left_addr),
-        .douta(red_tank_left_data)
+    RedTankLeftROM U_REDTANKLEFTROM_0(    
+        .a(red_tank_left_addr),
+        .clk(clk_25m),
+        .spo(red_tank_left_data)
     );
     
-    GreenTankUpROM U_GREENTANKUPROM_0(
-        .clka(clk_25m),
-        .addra(green_tank_up_addr),
-        .douta(green_tank_up_data)
+    GreenTankUpROM U_GREENTANKUPROM_0(     
+        .a(green_tank_up_addr),
+        .clk(clk_25m),
+        .spo(green_tank_up_data)
     );    
     
-    GreenTankLeftROM U_GREENTANKLEFTROM_0(
-        .clka(clk_25m),
-        .addra(green_tank_left_addr),
-        .douta(green_tank_left_data)
+    GreenTankLeftROM U_GREENTANKLEFTROM_0(     
+        .a(green_tank_left_addr),
+        .clk(clk_25m),
+        .spo(green_tank_left_data)
     );
     
     //子弹数据
-    BulletUpROM U_REDBULLETUPROM_0(
-        .clka(clk_25m),
-        .addra(red_bullet_up_addr),
-        .douta(red_bullet_up_data)
+    BulletUpROM U_REDBULLETUPROM_0(     
+        .a(red_bullet_up_addr),
+        .clk(clk_25m),
+        .spo(red_bullet_up_data)
     );
     
     BulletLeftROM U_REDBULLETLEFTROM_0(
-        .clka(clk_25m),
-        .addra(red_bullet_left_addr),
-        .douta(red_bullet_left_data)
+        .a(red_bullet_left_addr),
+        .clk(clk_25m),
+        .spo(red_bullet_left_data)
     );    
     
-    BulletUpROM U_GREENBULLETUPROM_0(
-        .clka(clk_25m),
-        .addra(green_bullet_up_addr),
-        .douta(green_bullet_up_data)
+    BulletUpROM U_GREENBULLETUPROM_0(      
+        .a(green_bullet_up_addr),
+        .clk(clk_25m),
+        .spo(green_bullet_up_data)
     );
     
-    BulletLeftROM U_GREENBULLETLEFTROM_0(
-        .clka(clk_25m),
-        .addra(green_bullet_left_addr),
-        .douta(green_bullet_left_data)
+    BulletLeftROM U_GREENBULLETLEFTROM_0(  
+        .a(green_bullet_left_addr),
+        .clk(clk_25m),
+        .spo(green_bullet_left_data)
     );        
-    
     
     //红坦克方向  keyboard -> fsm  
     always @(posedge clk_25m, negedge rst_n)
@@ -234,7 +233,7 @@ module GameScene(
     begin
         if(!rst_n)
         begin
-            map_addr <= 19'b00;
+            map_addr <= 19'b0;
             screen_data <= 8'b0;
         end
         else
@@ -300,8 +299,8 @@ module GameScene(
         
         if(!rst_n)
         begin
-            red_bullet_up_addr <= 7'b0;
-            red_bullet_left_addr <= 7'b0;
+            red_bullet_up_addr <= 7'b10;
+            red_bullet_left_addr <= 7'b10;
         end
         else if(red_bullet_active == 1'b1)
         begin
@@ -310,7 +309,7 @@ module GameScene(
                     if((pixel_x == red_bullet_start_pos_x) && (pixel_y == red_bullet_start_pos_y))
                          red_bullet_up_addr <= 7'b10;
                     else if((pixel_x >= red_bullet_start_pos_x) && (pixel_x <= red_bullet_start_pos_x + 7) &&
-                    (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 14))
+                    (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 15))
                     begin
                          red_bullet_up_addr <= red_bullet_up_addr + 7'b1;
                          screen_data <= red_bullet_up_data;
@@ -319,9 +318,9 @@ module GameScene(
                          red_bullet_up_addr <= red_bullet_up_addr;
                   DIR_DOWN:
                     if((pixel_x == red_bullet_start_pos_x) && (pixel_y == red_bullet_start_pos_y))
-                        red_bullet_up_addr <= 7'd118;
+                        red_bullet_up_addr <= 7'd125;
                     else if((pixel_x >= red_bullet_start_pos_x) && (pixel_x <= red_bullet_start_pos_x + 7) &&
-                    (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 14))
+                    (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 15))
                     begin
                          red_bullet_up_addr <= red_bullet_up_addr - 7'b1;
                         screen_data <= red_bullet_up_data;
@@ -331,7 +330,7 @@ module GameScene(
                   DIR_LEFT:
                     if((pixel_x == red_bullet_start_pos_x) && (pixel_y == red_bullet_start_pos_y))
                          red_bullet_left_addr <= 7'b10;
-                    else if((pixel_x >= red_bullet_start_pos_x) && (pixel_x <= red_bullet_start_pos_x + 14) &&
+                    else if((pixel_x >= red_bullet_start_pos_x) && (pixel_x <= red_bullet_start_pos_x + 15) &&
                     (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 7))
                     begin
                          red_bullet_left_addr <= red_bullet_left_addr + 7'b1;
@@ -341,8 +340,8 @@ module GameScene(
                          red_bullet_left_addr <= red_bullet_left_addr;                        
                   DIR_RIGHT:
                     if((pixel_x == red_bullet_start_pos_x) && (pixel_y == red_bullet_start_pos_y))
-                         red_bullet_left_addr <= 7'd118;
-                    else if((pixel_x >= red_bullet_start_pos_x) && (pixel_x <= red_bullet_start_pos_x + 14) &&
+                         red_bullet_left_addr <= 7'd125;
+                    else if((pixel_x >= red_bullet_start_pos_x) && (pixel_x <= red_bullet_start_pos_x + 15) &&
                     (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 7))
                     begin
                          red_bullet_left_addr <= red_bullet_left_addr - 7'b1;
@@ -411,17 +410,17 @@ module GameScene(
         
         if(!rst_n)
         begin
-            green_bullet_up_addr <= 7'b0;
-            green_bullet_left_addr <= 7'b0;
+            green_bullet_up_addr <= 7'b10;
+            green_bullet_left_addr <= 7'b10;
         end
         else if(green_bullet_active == 1'b1)
         begin
             case (green_bullet_dir)
                  DIR_UP:
                     if((pixel_x == green_bullet_start_pos_x) && (pixel_y == green_bullet_start_pos_y))
-                         green_bullet_up_addr <= 7'b10;
+                         green_bullet_up_addr <= 7'd10;
                     else if((pixel_x >= green_bullet_start_pos_x) && (pixel_x <= green_bullet_start_pos_x + 7) &&
-                    (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 14))
+                    (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 15))
                     begin
                          green_bullet_up_addr <= green_bullet_up_addr + 7'b1;
                          screen_data <= green_bullet_up_data;
@@ -430,9 +429,9 @@ module GameScene(
                          green_bullet_up_addr <= green_bullet_up_addr;
                   DIR_DOWN:
                     if((pixel_x == green_bullet_start_pos_x) && (pixel_y == green_bullet_start_pos_y))
-                         green_bullet_up_addr <= 7'd118;
+                         green_bullet_up_addr <= 7'd125;
                     else if((pixel_x >= green_bullet_start_pos_x) && (pixel_x <= green_bullet_start_pos_x + 7) &&
-                    (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 14))
+                    (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 15))
                     begin
                          green_bullet_up_addr <= green_bullet_up_addr - 7'b1;
                          screen_data <= green_bullet_up_data;
@@ -442,7 +441,7 @@ module GameScene(
                   DIR_LEFT:
                     if((pixel_x == green_bullet_start_pos_x) && (pixel_y == green_bullet_start_pos_y))
                          green_bullet_left_addr <= 7'b10;
-                    else if((pixel_x >= green_bullet_start_pos_x) && (pixel_x <= green_bullet_start_pos_x + 14) &&
+                    else if((pixel_x >= green_bullet_start_pos_x) && (pixel_x <= green_bullet_start_pos_x + 15) &&
                     (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 7))
                     begin
                          green_bullet_left_addr <= green_bullet_left_addr + 7'b1;
@@ -452,8 +451,8 @@ module GameScene(
                          green_bullet_left_addr <= green_bullet_left_addr;                        
                   DIR_RIGHT:
                     if((pixel_x == green_bullet_start_pos_x) && (pixel_y == green_bullet_start_pos_y))
-                         green_bullet_left_addr <= 7'd118;
-                    else if((pixel_x >= green_bullet_start_pos_x) && (pixel_x <= green_bullet_start_pos_x + 14) &&
+                         green_bullet_left_addr <= 7'd125;
+                    else if((pixel_x >= green_bullet_start_pos_x) && (pixel_x <= green_bullet_start_pos_x + 15) &&
                     (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 7))
                     begin
                          green_bullet_left_addr <= green_bullet_left_addr - 7'b1;
@@ -470,8 +469,8 @@ module GameScene(
    begin
         if(!rst_n)
         begin
-            red_tank_start_pos_x <= 60;
-            red_tank_start_pos_y <= 60;
+            red_tank_start_pos_x <= 70;
+            red_tank_start_pos_y <= 50;
             red_stop <= 1'b0;
         end
         else if((map_data != 8'hFF) && (pixel_x >= red_tank_start_pos_x) && (pixel_x <= red_tank_start_pos_x + 31)
@@ -522,7 +521,7 @@ module GameScene(
         begin
             red_bullet_active <= 1'b0;
         end
-        else if(player1_btns == FIRE)
+        else if(player1_btns == FIRE && red_bullet_active == 1'b0)
         begin
             red_bullet_active <= 1'b1;
             red_bullet_start_pos_x <= red_tank_start_pos_x + 15;
@@ -531,11 +530,11 @@ module GameScene(
         else if((red_bullet_active == 1'b1) && (map_data != 8'hFF))
         begin
             case (red_bullet_dir)
-                DIR_UP, DIR_DOWN:   if((pixel_x >= red_bullet_start_pos_x && pixel_x < red_bullet_start_pos_x + 7) 
-                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y < red_bullet_start_pos_x + 14))
+                DIR_UP, DIR_DOWN:   if((pixel_x >= red_bullet_start_pos_x && pixel_x <= red_bullet_start_pos_x + 7) 
+                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_x + 14))
                             red_bullet_active <= 1'b0;
-                DIR_LEFT,DIR_RIGHT: if((pixel_x >= red_bullet_start_pos_x && pixel_x < red_bullet_start_pos_x + 14) 
-                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y < red_bullet_start_pos_x + 7))
+                DIR_LEFT,DIR_RIGHT: if((pixel_x >= red_bullet_start_pos_x && pixel_x <= red_bullet_start_pos_x + 14) 
+                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_x + 7))
                             red_bullet_active <= 1'b0;
            endcase
         end
@@ -557,8 +556,8 @@ module GameScene(
         
         if(!rst_n)
         begin
-            green_tank_start_pos_x <= 60;
-            green_tank_start_pos_y <= 160;
+            green_tank_start_pos_x <= 530;
+            green_tank_start_pos_y <= 400;
             green_stop <= 1'b0;
         end
         else if((map_data != 8'hFF) && (pixel_x >= green_tank_start_pos_x) && (pixel_x <= green_tank_start_pos_x + 31)
@@ -609,7 +608,7 @@ module GameScene(
         begin
             green_bullet_active <= 1'b0;
         end
-        else if(player2_btns == FIRE)
+        else if(player2_btns == FIRE && green_bullet_active == 1'b0)
         begin
             green_bullet_active <= 1'b1;
             green_bullet_start_pos_x <= green_tank_start_pos_x + 15;
@@ -618,11 +617,11 @@ module GameScene(
         else if((green_bullet_active == 1'b1) && (map_data != 8'hFF))
         begin
             case (green_bullet_dir)
-                DIR_UP, DIR_DOWN:   if((pixel_x >= green_bullet_start_pos_x && pixel_x < green_bullet_start_pos_x + 7) 
-                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y < green_bullet_start_pos_x + 14))
+                DIR_UP, DIR_DOWN:   if((pixel_x >= green_bullet_start_pos_x && pixel_x <= green_bullet_start_pos_x + 7) 
+                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_x + 14))
                     green_bullet_active <= 1'b0;
-                DIR_LEFT,DIR_RIGHT: if((pixel_x >= green_bullet_start_pos_x && pixel_x < green_bullet_start_pos_x + 14) 
-                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y < green_bullet_start_pos_x + 7))
+                DIR_LEFT,DIR_RIGHT: if((pixel_x >= green_bullet_start_pos_x && pixel_x <= green_bullet_start_pos_x + 14) 
+                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_x + 7))
                     green_bullet_active <= 1'b0;
             endcase
         end
