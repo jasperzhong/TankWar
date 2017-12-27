@@ -530,11 +530,11 @@ module GameScene(
         else if((red_bullet_active == 1'b1) && (map_data != 8'hFF))
         begin
             case (red_bullet_dir)
-                DIR_UP, DIR_DOWN:   if((pixel_x >= red_bullet_start_pos_x && pixel_x <= red_bullet_start_pos_x + 7) 
-                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_x + 14))
+                DIR_UP, DIR_DOWN:   if((pixel_x >= red_bullet_start_pos_x) && (pixel_x <= red_bullet_start_pos_x + 7) 
+                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 15))
                             red_bullet_active <= 1'b0;
-                DIR_LEFT,DIR_RIGHT: if((pixel_x >= red_bullet_start_pos_x && pixel_x <= red_bullet_start_pos_x + 14) 
-                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_x + 7))
+                DIR_LEFT,DIR_RIGHT: if((pixel_x >= red_bullet_start_pos_x && pixel_x <= red_bullet_start_pos_x + 15) 
+                && (pixel_y >= red_bullet_start_pos_y) && (pixel_y <= red_bullet_start_pos_y + 7))
                             red_bullet_active <= 1'b0;
            endcase
         end
@@ -617,11 +617,11 @@ module GameScene(
         else if((green_bullet_active == 1'b1) && (map_data != 8'hFF))
         begin
             case (green_bullet_dir)
-                DIR_UP, DIR_DOWN:   if((pixel_x >= green_bullet_start_pos_x && pixel_x <= green_bullet_start_pos_x + 7) 
-                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_x + 14))
+                DIR_UP, DIR_DOWN:   if((pixel_x >= green_bullet_start_pos_x) && (pixel_x <= green_bullet_start_pos_x + 7) 
+                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 15))
                     green_bullet_active <= 1'b0;
-                DIR_LEFT,DIR_RIGHT: if((pixel_x >= green_bullet_start_pos_x && pixel_x <= green_bullet_start_pos_x + 14) 
-                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_x + 7))
+                DIR_LEFT,DIR_RIGHT: if((pixel_x >= green_bullet_start_pos_x && pixel_x <= green_bullet_start_pos_x + 15) 
+                && (pixel_y >= green_bullet_start_pos_y) && (pixel_y <= green_bullet_start_pos_y + 7))
                     green_bullet_active <= 1'b0;
             endcase
         end
